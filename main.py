@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import Executor
 import geopy.distance
 
-API_TOKEN = '6555099716:AAGIA5DoEiop4AAXpZpGSnrm0VbaCaQJZ6o'
+API_TOKEN = 'secret'
 
 # Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN)
