@@ -1,9 +1,9 @@
-from aiogram import Bot, Dispatcher, types
+import asyncio
+from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils import Executor
 import geopy.distance
 
-API_TOKEN = 'secret'
+API_TOKEN = '6555099716:AAGIA5DoEiop4AAXpZpGSnrm0VbaCaQJZ6o'
 
 # Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN)
@@ -25,21 +25,28 @@ async def send_welcome(message: types.Message):
 
 @dp.message_handler(commands=['price'])
 async def send_price(message: types.Message):
-    user_coordinates = await get_user_coordinates(message)
+    await message.answer("Пожалуйста, отправьте свою геолокацию:")
+
+@dp.message_handler(content_types=['location'])
+async def handle_location(message: types.Message):
+    user_coordinates = message.location.latitude, message.location.longitude
     closest_shop = await get_closest_shop(user_coordinates)
     prices = closest_shop['prices']
     keyboard = create_prices_keyboard(prices)
     await message.reply(f"Цены в {closest_shop['name']}:", reply_markup=keyboard)
 
+
 async def get_user_coordinates(message):
-    # Если пользователь отправил свое местоположение
-    if message.location:
-        return message.location.latitude, message.location.longitude
-    else:
-        # Отправить запрос на получение местоположения
-        await bot.send_message(message.chat.id, "Пожалуйста, предоставь свою геолокацию:")
-        location = await message.answer(types.Message.get_location(location_attr=types.Location()))
-        return location.latitude, location.longitude
+    try:
+        response = await bot.get_updates()
+        for update in response:
+            if 'message' in update and 'location' in update['message']:
+                return update['message']['location']['latitude'], update['message']['location']['longitude']
+    except asyncio.TimeoutError:
+        await bot.send_message(message.chat.id, "Время ожидания истекло. Пожалуйста, попробуйте снова.")
+        return
+
+
 
 async def get_closest_shop(user_coordinates):
     closest_shop = None
@@ -60,4 +67,4 @@ def create_prices_keyboard(prices):
     return keyboard
 
 if __name__ == '__main__':
-    Executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp, skip_updates=True)
